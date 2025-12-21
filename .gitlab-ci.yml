@@ -39,25 +39,25 @@ docker-build:
 
     # Retag images for GitLab Container Registry
     - docker tag chapter04-product-composite $REGISTRY_IMAGE_PREFIX/chapter04-product-composite:$TAG
-	- docker tag chapter04-review $REGISTRY_IMAGE_PREFIX/chapter04-review:$TAG
-	- docker tag chapter04-product $REGISTRY_IMAGE_PREFIX/chapter04-product:$TAG
-	- docker tag chapter04-recommendation $REGISTRY_IMAGE_PREFIX/chapter04-recommendation:$TAG
+    - docker tag chapter04-review $REGISTRY_IMAGE_PREFIX/chapter04-review:$TAG
+    - docker tag chapter04-product $REGISTRY_IMAGE_PREFIX/chapter04-product:$TAG
+    - docker tag chapter04-recommendation $REGISTRY_IMAGE_PREFIX/chapter04-recommendation:$TAG
 
     - docker tag chapter04-product-composite $REGISTRY_IMAGE_PREFIX/chapter04-product-composite:latest
-	- docker tag chapter04-review $REGISTRY_IMAGE_PREFIX/chapter04-review:latest
-	- docker tag chapter04-product $REGISTRY_IMAGE_PREFIX/chapter04-product:latest
-	- docker tag chapter04-recommendation $REGISTRY_IMAGE_PREFIX/chapter04-recommendation:latest
+    - docker tag chapter04-review $REGISTRY_IMAGE_PREFIX/chapter04-review:latest
+    - docker tag chapter04-product $REGISTRY_IMAGE_PREFIX/chapter04-product:latest
+    - docker tag chapter04-recommendation $REGISTRY_IMAGE_PREFIX/chapter04-recommendation:latest
 
     # Push images
     - docker push $REGISTRY_IMAGE_PREFIX/chapter04-product:$TAG
     - docker push $REGISTRY_IMAGE_PREFIX/chapter04-review:$TAG
     - docker push $REGISTRY_IMAGE_PREFIX/chapter04-product-composite:$TAG
-	- docker push $REGISTRY_IMAGE_PREFIX/chapter04-recommendation:$TAG
+    - docker push $REGISTRY_IMAGE_PREFIX/chapter04-recommendation:$TAG
 
     - docker push $REGISTRY_IMAGE_PREFIX/chapter04-product:latest
     - docker push $REGISTRY_IMAGE_PREFIX/chapter04-review:latest
     - docker push $REGISTRY_IMAGE_PREFIX/chapter04-product-composite:latest
-	- docker push $REGISTRY_IMAGE_PREFIX/chapter04-recommendation:latest
+    - docker push $REGISTRY_IMAGE_PREFIX/chapter04-recommendation:latest
 
 # --------------------------------------------------
 # 3️⃣ (Optional) Run stack using docker compose
