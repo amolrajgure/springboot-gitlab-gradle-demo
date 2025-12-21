@@ -21,7 +21,7 @@ before_script:
 # --------------------------------------------------
 build-jars:
   stage: build
-  image: gradle:8.8-jdk24
+  image: eclipse-temurin:24-jdk 
   script:
     - ./gradlew build
   artifacts:
