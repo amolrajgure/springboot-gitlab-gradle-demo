@@ -1,7 +1,6 @@
-image: docker:26
-
-services:
-  - docker:26-dind
+stages:
+  - build
+  - docker
 
 variables:
   DOCKER_TLS_CERTDIR: ""
@@ -9,19 +8,12 @@ variables:
   REGISTRY_IMAGE_PREFIX: $CI_REGISTRY_IMAGE
   TAG: $CI_COMMIT_SHORT_SHA
 
-stages:
-  - build
-  - docker
-
-before_script:
-  - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-
 # --------------------------------------------------
-# 1️⃣ Build JARs using Gradle
+# 1️⃣ Build JARs using Gradle (NO Docker here)
 # --------------------------------------------------
 build-jars:
   stage: build
-  image: eclipse-temurin:24-jdk 
+  image: eclipse-temurin:24-jdk
   script:
     - ./gradlew build
   artifacts:
@@ -33,6 +25,11 @@ build-jars:
 # --------------------------------------------------
 docker-build:
   stage: docker
+  image: docker:26
+  services:
+    - docker:26-dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
     - docker compose build
 
@@ -45,4 +42,3 @@ docker-build:
     - docker push $REGISTRY_IMAGE_PREFIX/chapter04-review:$TAG
     - docker push $REGISTRY_IMAGE_PREFIX/chapter04-product:$TAG
     - docker push $REGISTRY_IMAGE_PREFIX/chapter04-recommendation:$TAG
-
