@@ -1,0 +1,70 @@
+image: docker:26
+
+services:
+  - docker:26-dind
+
+variables:
+  DOCKER_TLS_CERTDIR: ""
+  COMPOSE_PROJECT_NAME: chapter04
+  REGISTRY_IMAGE_PREFIX: $CI_REGISTRY_IMAGE
+  TAG: $CI_COMMIT_SHORT_SHA
+
+stages:
+  - build
+  - docker
+  - run
+
+before_script:
+  - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+
+# --------------------------------------------------
+# 1️⃣ Build JARs using Gradle
+# --------------------------------------------------
+build-jars:
+  stage: build
+  image: gradle:8.8-jdk24
+  script:
+    - ./gradlew build
+  artifacts:
+    paths:
+      - "**/build/libs/*.jar"
+
+# --------------------------------------------------
+# 2️⃣ Build Docker images using docker compose
+# --------------------------------------------------
+docker-build:
+  stage: docker
+  script:
+    - docker compose build
+
+    # Retag images for GitLab Container Registry
+    - docker tag chapter04-product-composite $REGISTRY_IMAGE_PREFIX/chapter04-product-composite:$TAG
+	- docker tag chapter04-review $REGISTRY_IMAGE_PREFIX/chapter04-review:$TAG
+	- docker tag chapter04-product $REGISTRY_IMAGE_PREFIX/chapter04-product:$TAG
+	- docker tag chapter04-recommendation $REGISTRY_IMAGE_PREFIX/chapter04-recommendation:$TAG
+
+    - docker tag chapter04-product-composite $REGISTRY_IMAGE_PREFIX/chapter04-product-composite:latest
+	- docker tag chapter04-review $REGISTRY_IMAGE_PREFIX/chapter04-review:latest
+	- docker tag chapter04-product $REGISTRY_IMAGE_PREFIX/chapter04-product:latest
+	- docker tag chapter04-recommendation $REGISTRY_IMAGE_PREFIX/chapter04-recommendation:latest
+
+    # Push images
+    - docker push $REGISTRY_IMAGE_PREFIX/chapter04-product:$TAG
+    - docker push $REGISTRY_IMAGE_PREFIX/chapter04-review:$TAG
+    - docker push $REGISTRY_IMAGE_PREFIX/chapter04-product-composite:$TAG
+	- docker push $REGISTRY_IMAGE_PREFIX/chapter04-recommendation:$TAG
+
+    - docker push $REGISTRY_IMAGE_PREFIX/chapter04-product:latest
+    - docker push $REGISTRY_IMAGE_PREFIX/chapter04-review:latest
+    - docker push $REGISTRY_IMAGE_PREFIX/chapter04-product-composite:latest
+	- docker push $REGISTRY_IMAGE_PREFIX/chapter04-recommendation:latest
+
+# --------------------------------------------------
+# 3️⃣ (Optional) Run stack using docker compose
+# --------------------------------------------------
+docker-up:
+  stage: run
+  script:
+    - docker compose up -d
+  when: manual
+
