@@ -15,6 +15,7 @@ build-jars:
   stage: build
   image: eclipse-temurin:24-jdk
   script:
+    - cd app
     - ./gradlew build
   artifacts:
     paths:
