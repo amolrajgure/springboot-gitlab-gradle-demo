@@ -8,8 +8,6 @@ variables:
   REGISTRY_IMAGE_PREFIX: $CI_REGISTRY_IMAGE
   TAG: $CI_COMMIT_SHORT_SHA
 
-# 🔑 FIX: make artifact upload reachable from job containers
-  CI_SERVER_URL: "http://host.docker.internal:8080"
   
 # --------------------------------------------------
 # 1️⃣ Build JARs using Gradle (NO Docker here)
