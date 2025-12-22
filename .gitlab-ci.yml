@@ -3,7 +3,6 @@ stages:
   - docker
 
 variables:
-  DOCKER_TLS_CERTDIR: ""
   COMPOSE_PROJECT_NAME: chapter04
   REGISTRY_IMAGE_PREFIX: $CI_REGISTRY_IMAGE
   TAG: $CI_COMMIT_SHORT_SHA
@@ -28,19 +27,22 @@ build-jars:
 docker-build:
   stage: docker
   image: docker:26
-  services:
-    - docker:26-dind
-  before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
+    # Login to GitLab registry via host
+    - echo "$CI_REGISTRY_PASSWORD" | docker login localhost:5050 -u "$CI_REGISTRY_USER" --password-stdin
+
+    # Build images using docker-compose
+    - cd app
     - docker compose build
 
-    - docker tag chapter04-product-composite $REGISTRY_IMAGE_PREFIX/chapter04-product-composite:$TAG
-    - docker tag chapter04-review $REGISTRY_IMAGE_PREFIX/chapter04-review:$TAG
-    - docker tag chapter04-product $REGISTRY_IMAGE_PREFIX/chapter04-product:$TAG
-    - docker tag chapter04-recommendation $REGISTRY_IMAGE_PREFIX/chapter04-recommendation:$TAG
+    # Tag images for GitLab registry
+    - docker tag app-product localhost:5050/root/springboot-gitlab-gradle-demo/product:latest
+    - docker tag app-review localhost:5050/root/springboot-gitlab-gradle-demo/review:latest
+    - docker tag app-recommendation localhost:5050/root/springboot-gitlab-gradle-demo/recommendation:latest
+    - docker tag app-product-composite localhost:5050/root/springboot-gitlab-gradle-demo/product-composite:latest
 
-    - docker push $REGISTRY_IMAGE_PREFIX/chapter04-product-composite:$TAG
-    - docker push $REGISTRY_IMAGE_PREFIX/chapter04-review:$TAG
-    - docker push $REGISTRY_IMAGE_PREFIX/chapter04-product:$TAG
-    - docker push $REGISTRY_IMAGE_PREFIX/chapter04-recommendation:$TAG
+    # Push images
+    - docker push localhost:5050/root/springboot-gitlab-gradle-demo/product:latest
+    - docker push localhost:5050/root/springboot-gitlab-gradle-demo/review:latest
+    - docker push localhost:5050/root/springboot-gitlab-gradle-demo/recommendation:latest
+    - docker push localhost:5050/root/springboot-gitlab-gradle-demo/product-composite:latest
