@@ -58,7 +58,7 @@ waitForService() {
   echo "Service is up"
 }
 
-set -e
+set -eu
 
 echo "Start Tests: $(date)"
 echo "HOST=$HOST"

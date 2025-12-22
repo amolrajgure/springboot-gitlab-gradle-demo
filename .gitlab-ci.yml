@@ -37,7 +37,7 @@ docker-build:
 # --------------------------------------------------
 integration-test:
   stage: test
-  image: docker:26
+  image: ci-test-tools
   dependencies:
     - docker-build
   script:
