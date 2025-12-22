@@ -1,15 +1,14 @@
 stages:
   - build
   - docker
+  - test
 
 variables:
   COMPOSE_PROJECT_NAME: chapter04
-  REGISTRY_IMAGE_PREFIX: $CI_REGISTRY_IMAGE
-  TAG: $CI_COMMIT_SHORT_SHA
+  DOCKER_BUILDKIT: "1"
 
-  
 # --------------------------------------------------
-# 1️⃣ Build JARs using Gradle (NO Docker here)
+# 1️⃣ Build JARs using Gradle
 # --------------------------------------------------
 build-jars:
   stage: build
@@ -22,27 +21,39 @@ build-jars:
       - "**/build/libs/*.jar"
 
 # --------------------------------------------------
-# 2️⃣ Build + Push Docker images using docker compose
+# 2️⃣ Build Docker images (NO registry push)
 # --------------------------------------------------
 docker-build:
   stage: docker
   image: docker:26
+  dependencies:
+    - build-jars
   script:
-    # Login to GitLab registry via host
-    - echo "$CI_REGISTRY_PASSWORD" | docker login localhost:5050 -u "$CI_REGISTRY_USER" --password-stdin
-
-    # Build images using docker-compose
     - cd app
-    - docker compose build
+    - docker compose build --parallel=false
 
-    # Tag images for GitLab registry
-    - docker tag app-product localhost:5050/root/springboot-gitlab-gradle-demo/product:latest
-    - docker tag app-review localhost:5050/root/springboot-gitlab-gradle-demo/review:latest
-    - docker tag app-recommendation localhost:5050/root/springboot-gitlab-gradle-demo/recommendation:latest
-    - docker tag app-product-composite localhost:5050/root/springboot-gitlab-gradle-demo/product-composite:latest
+# --------------------------------------------------
+# 3️⃣ Start stack + run integration tests
+# --------------------------------------------------
+integration-test:
+  stage: test
+  image: docker:26
+  dependencies:
+    - docker-build
+  script:
+    - cd app
 
-    # Push images
-    - docker push localhost:5050/root/springboot-gitlab-gradle-demo/product:latest
-    - docker push localhost:5050/root/springboot-gitlab-gradle-demo/review:latest
-    - docker push localhost:5050/root/springboot-gitlab-gradle-demo/recommendation:latest
-    - docker push localhost:5050/root/springboot-gitlab-gradle-demo/product-composite:latest
+    # Start services
+    - docker compose up -d
+
+    # Wait a bit for services to be ready
+    - sleep 20
+
+    # Run end-to-end tests
+    - chmod +x test-em-all.bash
+    - ./test-em-all.bash
+
+  after_script:
+    # Always clean up
+    - cd app
+    - docker compose down -v
