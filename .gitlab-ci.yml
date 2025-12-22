@@ -50,8 +50,8 @@ integration-test:
     - sleep 20
 
     # Run end-to-end tests
-    - chmod +x test-em-all.bash
-    - ./test-em-all.bash
+    - chmod +x test-em-all.sh
+    - ./test-em-all.sh
 
   after_script:
     # Always clean up
