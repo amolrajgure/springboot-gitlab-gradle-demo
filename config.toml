@@ -1,0 +1,29 @@
+concurrent = 1
+check_interval = 0
+shutdown_timeout = 0
+
+[session_server]
+session_timeout = 1800
+
+[[runners]]
+name = "wsl2-production-runner"
+url = "http://gitlab"
+token = "glrt-TZcSHiAJz-hM2UR5IAVetW86MQpwOjEKdDozCnU6MQ8.01.170se39lu"
+executor = "docker"
+
+[runners.docker]
+image = "docker:26"
+privileged = true
+tls_verify = false
+
+# 🔑 CRITICAL: job containers must join GitLab network
+network_mode = "gitlab-net"
+
+pull_policy = ["if-not-present"]
+
+volumes = [
+  "/var/run/docker.sock:/var/run/docker.sock",
+  "/cache"
+]
+
+shm_size = 0
