@@ -51,7 +51,7 @@ integration-test:
 
     # Run end-to-end tests
     - chmod +x test-em-all.sh
-    - ./test-em-all.sh
+    - HOST=product-composite ./test-em-all.sh
 
   after_script:
     # Always clean up
