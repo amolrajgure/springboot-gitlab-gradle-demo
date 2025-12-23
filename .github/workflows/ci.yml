@@ -121,6 +121,11 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew build
+          
+      - name: Ensure Docker network exists
+        run: |
+          docker network inspect gitlab-net >/dev/null 2>&1 || \
+          docker network create gitlab-net
 
       # Start the full microservices stack
       - name: Start services
