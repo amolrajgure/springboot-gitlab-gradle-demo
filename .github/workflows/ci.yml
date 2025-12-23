@@ -1,74 +1,102 @@
 name: CI Pipeline
 
+# --------------------------------------------------
+# When to run this workflow
+# - On push to main
+# - On PRs targeting main
+# --------------------------------------------------
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
+# --------------------------------------------------
+# Global environment variables
+# --------------------------------------------------
 env:
+  # Ensures predictable Docker Compose project naming
   COMPOSE_PROJECT_NAME: chapter04
+
+  # Enables Docker BuildKit (better performance & logs)
   DOCKER_BUILDKIT: "1"
 
 jobs:
   # --------------------------------------------------
-  # 1️⃣ Build JARs using Gradle (REFERENCE ONLY)
+  # (REFERENCE ONLY)
+  # Standalone Gradle build job
+  #
+  # Kept commented intentionally for learning/reference.
+  # Not used because:
+  # - Each GitHub Actions job runs on a fresh VM
+  # - Docker builds require JARs to exist locally
+  # - We build JARs inside each job that needs them
   # --------------------------------------------------
-#    build:
-#    name: Build JARs
-#    runs-on: ubuntu-latest
-#
-#    steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v4
-#
-#      - name: Set up JDK 24
-#        uses: actions/setup-java@v4
-#        with:
-#          distribution: temurin
-#          java-version: 24
-#
-#      - name: Build with Gradle
-#        working-directory: app
-#        run: |
-#          chmod +x gradlew
-#          ./gradlew build
-#
-#      - name: Upload JAR artifacts
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: jars
-#          path: app/**/build/libs/*.jar
+  # build:
+  #   name: Build JARs
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #
+  #     - uses: actions/setup-java@v4
+  #       with:
+  #         distribution: temurin
+  #         java-version: 24
+  #
+  #     - name: Build with Gradle
+  #       working-directory: app
+  #       run: |
+  #         chmod +x gradlew
+  #         ./gradlew build
 
   # --------------------------------------------------
-  # 2️⃣ Build Docker images (NO registry push)
+  # 1️⃣ Build Docker images
+  #
+  # Why Gradle build is here:
+  # - Dockerfiles expect build/libs/*.jar
+  # - Docker build context must contain the JARs
+  # - Each job runs on a clean machine
   # --------------------------------------------------
   docker-build:
+    name: Build Docker Images
     runs-on: ubuntu-latest
-    #needs: build
 
     steps:
+      # Checkout repository
       - uses: actions/checkout@v4
 
+      # Set up JDK for Gradle build
       - name: Set up JDK 24
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 24
 
-      - name: Build JARs (for Docker context)
+      # Build Spring Boot JARs
+      # Required so Dockerfiles can ADD build/libs/*.jar
+      - name: Build JARs (for Docker build context)
         working-directory: app
         run: |
           chmod +x gradlew
           ./gradlew build
 
+      # Build Docker images using docker-compose
+      # Images are built locally only (no registry push)
       - name: Build Docker images
         working-directory: app
         run: |
           docker compose build --parallel=false
 
   # --------------------------------------------------
-  # 3️⃣ Start stack + run integration tests
+  # 2️⃣ Integration Tests
+  #
+  # IMPORTANT:
+  # - This job runs on a NEW VM
+  # - Docker images from previous job do NOT exist here
+  # - docker compose up may trigger image rebuilds
+  #
+  # Therefore:
+  # - We rebuild JARs again to satisfy Dockerfiles
   # --------------------------------------------------
   integration-test:
     name: Integration Tests
@@ -76,24 +104,41 @@ jobs:
     needs: docker-build
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      # Checkout repository
+      - uses: actions/checkout@v4
 
+      # Set up JDK again (new VM)
+      - name: Set up JDK 24
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 24
+
+      # Build JARs again for Docker Compose
+      # Required because this job is isolated
+      - name: Build JARs (required for compose up)
+        working-directory: app
+        run: |
+          chmod +x gradlew
+          ./gradlew build
+
+      # Start the full microservices stack
       - name: Start services
         working-directory: app
         run: |
           docker compose up -d
-          sleep 20
+          sleep 20   # Simple readiness wait (can be replaced with health checks)
 
+      # Run end-to-end tests
       - name: Run end-to-end tests
         working-directory: app
         run: |
           chmod +x test-em-all.sh
           HOST=product-composite ./test-em-all.sh
 
+      # Always clean up containers and volumes
       - name: Cleanup
         if: always()
         working-directory: app
         run: |
           docker compose down -v
-
