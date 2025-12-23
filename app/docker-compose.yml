@@ -34,7 +34,7 @@ services:
       - .:/app
     working_dir: /app
     entrypoint: /bin/sh
-    command: -c "chmod +x app/test-em-all.sh && HOST=product-composite ./app/test-em-all.sh"
+    command: -c "chmod +x app/test-em-all.sh && HOST=product-composite ./test-em-all.sh"
 
 networks:
   default:
