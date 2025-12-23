@@ -139,7 +139,7 @@ jobs:
         working-directory: app
         run: |
           chmod +x test-em-all.sh
-          HOST=product-composite ./test-em-all.sh
+          docker compose run --rm test-runner
 
       # Always clean up containers and volumes
       - name: Cleanup

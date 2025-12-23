@@ -24,6 +24,20 @@ services:
       - "8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+
+  test-runner:
+    image: eclipse-temurin:24-jdk
+    restart: "no"
+    networks:
+      - default
+    volumes:
+      - .:/app
+    working_dir: /app
+    entrypoint: [ "/bin/sh", "-c" ]
+    command: |
+      chmod +x test-em-all.sh &&
+      HOST=product-composite ./test-em-all.sh
+
 networks:
   default:
     external: true
